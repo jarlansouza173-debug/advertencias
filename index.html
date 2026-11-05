@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Advertências</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080e1b;color:white;font-family:Arial,sans-serif}
+header{background:#101b30;padding:22px}
+header h2{margin:0;color:#45a3ff}
+header p{color:#9caec5;margin-bottom:0}
+main{padding:18px;max-width:850px;margin:auto}
+.box{background:#111e33;border:1px solid #263b59;border-radius:13px;padding:16px;margin-bottom:18px}
+h3{margin-top:0}
+input{width:100%;padding:13px;background:#091426;border:1px solid #344968;border-radius:8px;color:white;margin:6px 0 12px}
+button{border:0;border-radius:8px;padding:12px 16px;color:white;font-weight:bold;cursor:pointer}
+.add{background:#1478d4;width:100%}
+.warn{background:#dc3545;width:100%;margin-top:10px}
+.student{background:#182943;border-radius:10px;padding:14px;margin:12px 0}
+.student strong{font-size:17px}
+.small{font-size:13px;color:#aabbd1}
+.history{border-left:3px solid #258cff;padding:10px 13px;margin:12px 0;background:#182943;border-radius:5px}
+.empty{color:#9aabc0;text-align:center;padding:20px}
+.count{color:#55b1ff}
+</style>
+</head>
+<body>
+
+<header>
+<h2>⚡ PAINEL DE ADVERTÊNCIAS</h2>
+<p>Sistema de controle escolar</p>
+</header>
+
+<main>
+<section class="box">
+<h3>👨‍🎓 Cadastrar aluno</h3>
+<input id="nome" placeholder="Nome do aluno">
+<button class="add" onclick="adicionar()">+ Adicionar aluno</button>
+</section>
+
+<section class="box">
+<h3>📋 Lista de alunos</h3>
+<input id="pesquisa" placeholder="Pesquisar aluno..." oninput="mostrarAlunos()">
+<div id="alunos"></div>
+</section>
+
+<section class="box">
+<h3>🕒 Histórico de advertências</h3>
+<div id="historico"></div>
+</section>
+</main>
+
+<script>
+let alunos=JSON.parse(localStorage.getItem("alunos")||"[]");
+let registros=JSON.parse(localStorage.getItem("registros")||"[]");
+
+function salvar(){
+ localStorage.setItem("alunos",JSON.stringify(alunos));
+ localStorage.setItem("registros",JSON.stringify(registros));
+}
+
+function adicionar(){
+ let campo=document.getElementById("nome");
+ let nome=campo.value.trim();
+ if(!nome)return alert("Digite o nome do aluno.");
+ if(alunos.some(a=>a.nome.toLowerCase()===nome.toLowerCase()))
+ return alert("Esse aluno já está cadastrado.");
+ alunos.push({nome});
+ campo.value="";
+ salvar();
+ mostrarAlunos();
+}
+
+function advertencia(nome){
+ if(!confirm("Registrar uma advertência para "+nome+"?"))return;
+ let agora=new Date();
+ registros.unshift({
+ nome:nome,
+ data:agora.toLocaleDateString("pt-BR"),
+ hora:agora.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})
+ });
+ salvar();
+ mostrarAlunos();
+ mostrarHistorico();
+}
+
+function mostrarAlunos(){
+ let busca=document.getElementById("pesquisa").value.toLowerCase();
+ let area=document.getElementById("alunos");
+ let lista=alunos.filter(a=>a.nome.toLowerCase().includes(busca));
+ area.innerHTML="";
+ if(!lista.length){
+ area.innerHTML='<div class="empty">Nenhum aluno encontrado.</div>';
+ return;
+ }
+ lista.forEach(a=>{
+ let total=registros.filter(r=>r.nome===a.nome).length;
+ let div=document.createElement("div");
+ div.className="student";
+ let nome=document.createElement("strong");
+ nome.textContent=a.nome;
+ let info=document.createElement("p");
+ info.className="small";
+ info.textContent=total+" advertência(s)";
+ let botao=document.createElement("button");
+ botao.className="warn";
+ botao.textContent="+ Advertência";
+ botao.onclick=()=>advertencia(a.nome);
+ div.append(nome,info,botao);
+ area.appendChild(div);
+ });
+}
+
+function mostrarHistorico(){
+ let area=document.getElementById("historico");
+ area.innerHTML="";
+ if(!registros.length){
+ area.innerHTML='<div class="empty">Nenhuma advertência registrada.</div>';
+ return;
+ }
+ registros.forEach(r=>{
+ let div=document.createElement("div");
+ div.className="history";
+ let nome=document.createElement("strong");
+ nome.textContent=r.nome;
+ let data=document.createElement("p");
+ data.className="small";
+ data.textContent="📅 "+r.data+" às "+r.hora;
+ div.append(nome,data);
+ area.appendChild(div);
+ });
+}
+
+mostrarAlunos();
+mostrarHistorico();
+</script>
+</body>
+</html>
